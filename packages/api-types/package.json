@@ -1,0 +1,41 @@
+{
+  "name": "@shared/api-types",
+  "version": "1.0.0",
+  "description": "Shared API types for the City Digital Twin project",
+  "license": "ISC",
+  "author": "Lorik Kabashi",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./auth": {
+      "types": "./src/auth.ts",
+      "default": "./src/auth.ts"
+    },
+    "./city": {
+      "types": "./src/data-points.ts",
+      "default": "./src/data-points.ts"
+    }, 
+    "./data-points": {
+      "types": "./src/data-points.ts",
+      "default": "./src/data-points.ts"
+    },
+    "./errors": {
+      "types": "./src/errors.ts",
+      "default": "./src/errors.ts"
+    }
+  },
+  "files": ["src"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}
