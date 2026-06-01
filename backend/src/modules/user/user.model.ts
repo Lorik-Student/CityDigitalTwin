@@ -1,10 +1,10 @@
-import { pool, toCamelCase } from "../../db";
-import type { UserProfile } from "@shared/api-types/users";
+import { pool, toCamelCase } from "../../db.js";
+import type { UserProfile } from "@shared/api-types/users.js";
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
 export type UserRecord = {
-    uuid: string;
+    id: string;
     name: string;
     lastName: string;
     email: string;
@@ -26,7 +26,7 @@ export type CreateUserRecord = {
 };
 
 const USER_SELECT = `
-    id as uuid,
+    id,
     name,
     last_name,
     email,
@@ -39,7 +39,7 @@ const USER_SELECT = `
 `;
 
 const USER_PROFILE_SELECT = `
-    id as uuid,
+    id,
     name,
     last_name,
     email,

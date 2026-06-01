@@ -21,6 +21,7 @@ const errorHandler: ErrorRequestHandler = (err: HttpError, req, res, next) => {
 		message: 'Njodhi një gabim i papritur.',
 	} satisfies ErrorPayload;
 
+	console.error(err);
 	res.status(500).json(payload);
 };
 

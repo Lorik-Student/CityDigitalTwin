@@ -1,10 +1,9 @@
-import * as DataPointsModel from './data-points.model';
-import type { City, CityProfile } from "@shared/api-types/data-points";
-import type { UUID } from '@shared/api-types'
+import * as DataPointsModel from './data-points.model.js';
+import type { Id } from '@shared/api-types';
 import type { Request, Response } from 'express';
 
 export const getCityProfile = async (req: Request, res: Response) => { 
-    const city = await DataPointsModel.getCityProfile(req.params.uuid as UUID);
+    const city = await DataPointsModel.getCityProfile(req.params.id as Id);
     res.status(200).json(city);
 }
 

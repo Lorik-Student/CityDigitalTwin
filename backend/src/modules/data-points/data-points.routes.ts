@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import * as Controller from './data-points.controller'
-import { authenticate, authorizeRole } from '../../middlewares/auth.middleware.js';
+import * as Controller from './data-points.controller.js'
+import { authenticate } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 

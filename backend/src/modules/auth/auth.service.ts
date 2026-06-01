@@ -3,7 +3,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError } from "../../http-errors.js";
 import * as UserModel from "../user/user.model.js";
-import * as UserService from "../user/user.service";
+import * as UserService from "../user/user.service.js";
 import * as TokenModel from "./token.model.js";
 import type { SignupInfo, LoginInfo, LoginResult } from "@shared/api-types/auth.js";
 import type { UserProfile } from "@shared/api-types/users.js";
@@ -22,7 +22,7 @@ export async function signup(userData: SignupInfo): Promise<UserProfile> {
 
     if (!user) 
         throw new UnauthorizedError({message: "Failed to create user"});
-    return UserService.getUserProfile(user.uuid);
+    return UserService.getUserProfile(user.id);
 }
 
 export async function login(userData: LoginInfo): Promise<LoginResult> {
@@ -31,7 +31,7 @@ export async function login(userData: LoginInfo): Promise<LoginResult> {
         throw new UnauthorizedError({message: "Invalid credentials"});
     }
 
-    const userId = authenticatedUser.uuid;
+    const userId = authenticatedUser.id;
     const [accessToken, refreshToken, user] = await Promise.all([
         generateAccessToken(userId),
         createRefreshToken(userId),
@@ -85,10 +85,10 @@ async function authenticate(userData: LoginInfo): Promise<UserRecord | null> {
     return foundUser;
 }
 
-async function generateAccessToken(uuid: string): Promise<string> {
-    const roles = await UserModel.getUserRoles(uuid);
+async function generateAccessToken(userId: string): Promise<string> {
+    const roles = await UserModel.getUserRoles(userId);
     const payload = {
-        id: uuid,
+        id: userId,
         role: roles.length ? roles[0] : 'user',
         exp: Math.floor(Date.now() / 1000) + (15 * 60), //(15 * 60)
     };
