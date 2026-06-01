@@ -10,5 +10,5 @@ CREATE TABLE Cities (
     weather_condition VARCHAR(40) DEFAULT 'Normal',
     population INT NOT NULL CHECK(population >= 0),
     area INT NOT NULL CHECK(area >= 0),
-    details TEXT
+    description TEXT
 )
