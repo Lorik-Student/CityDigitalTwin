@@ -5,6 +5,7 @@ export const userProfileSchema = z.object({
     name: z.string().trim().min(2).max(20),
     lastName: z.string().trim().min(2).max(20),
     email: z.email().trim().max(255),
+    phoneNumber: z.string().trim().max(20).optional(),
     picture: z.url().trim().max(1024).optional()
 })
 
@@ -19,5 +20,10 @@ export const userSchema = userProfileSchema.extend({
     message: "Fjalëkalimi dhe konfirmimi i fjalëkalimit duhet të përputhen",
 })
 
+export const userIdParamsSchema = z.object({
+    id: z.uuid()
+});
+
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type User = z.infer<typeof userSchema>;
+export type UserIdParams = z.infer<typeof userIdParamsSchema>;

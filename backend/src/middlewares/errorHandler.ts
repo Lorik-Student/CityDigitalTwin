@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
-import type { ErrorPayload } from '@shared/api-types/errors';
-import { HttpError } from '../http-errors';
+import type { ErrorPayload } from '@shared/api-types/errors.js';
+import { HttpError } from '../http-errors.js';
 
 const errorHandler: ErrorRequestHandler = (err: HttpError, req, res, next) => {
     if (res.headersSent) { 

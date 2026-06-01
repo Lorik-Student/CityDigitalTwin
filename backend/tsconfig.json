@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "@shared/api-types": ["../packages/api-types/src/index.ts"],
+      "@shared/api-types/*": ["../packages/api-types/src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

@@ -1,4 +1,5 @@
 import z from 'zod';
+import type { UserProfile } from './users';
 
 export const loginInfoSchema = z.object({
     email: z.email().trim().max(255),
@@ -21,6 +22,10 @@ export const authSessionSchema = z.object({
     accessToken: z.string(),
     refreshToken: z.string()
 })
+
+export interface LoginResult extends AuthSession {
+    user: UserProfile;
+} 
 
 export type LoginInfo = z.infer<typeof loginInfoSchema>;
 export type SignupInfo = z.infer<typeof signupInfoSchema>;

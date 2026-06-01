@@ -20,4 +20,24 @@ async function testConnection() {
 };
 
 await testConnection();
+
+// Konverto fushat e databazes prej formatit snake_case ne camelCase
+export function toCamelCase<T>(obj: any): T {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    if (Array.isArray(obj)) {
+        return obj.map(toCamelCase) as T;
+    }
+    
+    return Object.keys(obj).reduce((acc: any, key) => {
+        const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+        acc[camelKey] = obj[key];
+        return acc;
+    }, {}) as T;
+}
+
+export function to_snake_case(str: string): string {
+    return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+}
+
 export default pool;

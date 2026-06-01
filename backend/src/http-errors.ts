@@ -30,41 +30,46 @@ export class HttpError extends Error {
 }
 
 export class BadRequestError extends HttpError { 
-    constructor(message: string = "Kërkesa e pasaktë.", options: HttpErrorOptions = {}) {
-        super({ statusCode: 400, code: "BAD_REQUEST", message, options });
+    constructor(params: {code?: string; message?: string; options?: HttpErrorOptions }) {
+        const { message = "Kërkesa e pasaktë.", options = {} } = params;
+        super({ statusCode: 400,
+                code: params.code ?? "BAD_REQUEST",
+                message: message ?? "Kërkesa e pasaktë.",
+                options 
+        });
     }
 }
 
 export class UnauthorizedError extends HttpError {
-    constructor(params: { message?: string; options?: HttpErrorOptions }) {
+    constructor(params: { code?: string; message?: string; options?: HttpErrorOptions }) {
         const { message = "Autentifikimi i nevojshëm.", options = {} } = params;
-        super({ statusCode: 401, code: "UNAUTHORIZED", message, options });
+        super({ statusCode: 401, code: params.code ?? "UNAUTHORIZED", message, options });
     }
 }
 
 export class ForbiddenError extends HttpError {
-    constructor(params: { message?: string; options?: HttpErrorOptions }) {
+    constructor(params: { code?: string; message?: string; options?: HttpErrorOptions }) {
         const { message = "Ju nuk keni leje për të përdorur këtë burim.", options = {} } = params;
-        super({ statusCode: 403, code: "FORBIDDEN", message, options });
+        super({ statusCode: 403, code: params.code ?? "FORBIDDEN", message, options });
     }
 }
 export class NotFoundError extends HttpError {
-    constructor(params: { message?: string; options?: HttpErrorOptions }) {
+    constructor(params: { code?: string; message?: string; options?: HttpErrorOptions }) {
         const { message = "Rruga nuk u gjet.", options = {} } = params;
-        super({ statusCode: 404, code: "ROUTE_NOT_FOUND", message, options });
+        super({ statusCode: 404, code: params.code ?? "ROUTE_NOT_FOUND", message, options });
     }
 }
 
 export class ConflictError extends HttpError {
-    constructor(params: { message?: string; options?: HttpErrorOptions }) {
+    constructor(params: { code?: string; message?: string; options?: HttpErrorOptions }) {
         const { message = "Ndodhi një konflikt.", options = {} } = params;
-        super({ statusCode: 409, code: "CONFLICT", message, options });
+        super({ statusCode: 409, code: params.code ?? "CONFLICT", message, options });
     }
 }
 
 export class InternalServerError extends HttpError {
-    constructor(params: { message?: string; options?: HttpErrorOptions }) {
+    constructor(params: { code?: string; message?: string; options?: HttpErrorOptions }) {
         const { message = "Ndodhi një gabim i papritur.", options = {} } = params;
-        super({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message, options: { ...options, expose: false } });
+        super({ statusCode: 500, code: params.code ?? "INTERNAL_SERVER_ERROR", message, options: { ...options, expose: false } });
     }
 }

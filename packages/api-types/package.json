@@ -16,6 +16,10 @@
       "types": "./src/auth.ts",
       "default": "./src/auth.ts"
     },
+    "./auth.js": {
+      "types": "./src/auth.ts",
+      "default": "./src/auth.ts"
+    },
     "./city": {
       "types": "./src/data-points.ts",
       "default": "./src/data-points.ts"
@@ -24,7 +28,23 @@
       "types": "./src/data-points.ts",
       "default": "./src/data-points.ts"
     },
+    "./data-points.js": {
+      "types": "./src/data-points.ts",
+      "default": "./src/data-points.ts"
+    },
+    "./users": {
+      "types": "./src/users.ts",
+      "default": "./src/users.ts"
+    },
+    "./users.js": {
+      "types": "./src/users.ts",
+      "default": "./src/users.ts"
+    },
     "./errors": {
+      "types": "./src/errors.ts",
+      "default": "./src/errors.ts"
+    },
+    "./errors.js": {
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
     }
