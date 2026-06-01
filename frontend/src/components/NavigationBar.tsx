@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Home, Info, Mail, LogOut, Aperture, Clock, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Info, Mail, LogIn, LogOut, Aperture, Clock, MapPin, UserRound } from 'lucide-react';
+import type { UserProfile } from '@shared/api-types/users';
 
-export function NavigationBar() {
+type NavigationBarProps = {
+  user: UserProfile | null;
+  onLogin: () => void;
+  onLogout: () => void;
+};
+
+export function NavigationBar({ user, onLogin, onLogout }: NavigationBarProps) {
   const [time, setTime] = useState('');
 
   useEffect(() => {
@@ -37,10 +44,14 @@ export function NavigationBar() {
                 <span>Contact</span>
             </a>
 
-            <a href='#logout' className='flex items-center gap-2 text-[#d1d5db] hover:text-white transition-colors font-medium text-lg active:scale-95 cursor-pointer'>
-                <LogOut size={22} />
-                <span>Logout</span>
-            </a>
+            <button
+                type='button'
+                onClick={user ? onLogout : onLogin}
+                className='flex items-center gap-2 text-[#d1d5db] hover:text-white transition-colors font-medium text-lg active:scale-95 cursor-pointer'
+            >
+                {user ? <LogOut size={22} /> : <LogIn size={22} />}
+                <span>{user ? 'Logout' : 'Login'}</span>
+            </button>
         </nav>
 
         {/* Bottom Sub Pill */}
@@ -63,6 +74,16 @@ export function NavigationBar() {
                 <MapPin size={15} />
                 <span>22.4 - 29.38</span>
             </div>
+
+            {user && (
+                <>
+                    <div className='w-[1px] h-3.5 bg-white/10'></div>
+                    <div className='flex items-center gap-2 text-cyan-100'>
+                        <UserRound size={15} />
+                        <span>{user.name}</span>
+                    </div>
+                </>
+            )}
         </div>
     </div>
   );

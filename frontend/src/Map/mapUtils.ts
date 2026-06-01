@@ -1,15 +1,20 @@
 // mapUtils.ts
-import mapboxgl from 'mapbox-gl';
+import type { Map as MapboxMap } from 'mapbox-gl';
 import type { CityProfile } from '@shared/api-types/city';
+import { API_BASE_URL } from '../auth/authClient';
 
 export async function initializeRegions(
-    mapInstance: mapboxgl.Map, 
-    onCitySelect: (cityProps: any) => void
+    mapInstance: MapboxMap,
+    onCitySelect: (cityProps: CityProfile) => void,
+    accessToken: string
 ) { 
     try {
-        const response = await fetch("http://localhost:5000/api/data-points/cities", {
+        const response = await fetch(`${API_BASE_URL}/data-points/cities`, {
             method: "GET",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+            },
         });
         
         if (!response.ok) {
@@ -22,9 +27,9 @@ export async function initializeRegions(
             .filter(city => city && city.lng !== undefined && city.lat !== undefined)
             .map(city => ({
                 type: 'Feature' as const,
-                id: city.uuid, 
+                id: city.id, 
                 properties: { 
-                    uuid: city.uuid, 
+                    id: city.id, 
                     name: city.name, 
                     weatherCondition: city.weatherCondition,
                     population: city.population,
@@ -90,7 +95,7 @@ export async function initializeRegions(
         const clickedCity = e.features[0];
         if (clickedCity.properties) {
             // Pass the GeoJSON properties back to React state
-            onCitySelect(clickedCity.properties);
+            onCitySelect(clickedCity.properties as CityProfile);
         }
     });
 

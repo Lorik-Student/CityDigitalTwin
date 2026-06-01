@@ -5,9 +5,16 @@ import { initializeRegions } from './mapUtils';
 import type { CityProfile } from '@shared/api-types';
 import { InfoCard } from '../components/InfoCard'
 
-export default function Map() {
+type MapProps = {
+    accessToken?: string;
+    onAuthRequired: () => void;
+};
+
+export default function Map({ accessToken, onAuthRequired }: MapProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null); 
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
+    const [hasLoadedRegions, setHasLoadedRegions] = useState(false);
     const [selectedCity, setSelectedCity] = useState<CityProfile | null>(null);
 
     useEffect(() => {
@@ -34,8 +41,8 @@ export default function Map() {
         map.current = mapInstance;
 
         // Wait until the style structure is fully compiled into WebGL context
-        mapInstance.on('load', async () => {
-            await initializeRegions(mapInstance, setSelectedCity);
+        mapInstance.on('load', () => {
+            setIsMapLoaded(true);
         });
 
         
@@ -46,6 +53,18 @@ export default function Map() {
         }
         };
     }, []);
+
+    useEffect(() => {
+        if (!isMapLoaded || !map.current || hasLoadedRegions) return;
+
+        if (!accessToken) {
+            return;
+        }
+
+        initializeRegions(map.current, setSelectedCity, accessToken)
+            .then(() => setHasLoadedRegions(true))
+            .catch(() => onAuthRequired());
+    }, [accessToken, hasLoadedRegions, isMapLoaded, onAuthRequired]);
 
     return (
         <div className='fixed inset-0 z-0 bg-[#02090c]'>
