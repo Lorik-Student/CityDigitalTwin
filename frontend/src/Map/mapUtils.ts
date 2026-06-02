@@ -1,4 +1,3 @@
-// mapUtils.ts
 import type { Map as MapboxMap } from 'mapbox-gl';
 import type { CityProfile } from '@shared/api-types/city';
 import { API_BASE_URL } from '../auth/authClient';
