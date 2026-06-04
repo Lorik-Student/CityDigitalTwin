@@ -47,6 +47,14 @@
     "./errors.js": {
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
+    },
+    "./weather": {
+      "types": "./src/weather.ts",
+      "default": "./src/weather.ts"
+    },
+    "./weather.js": {
+      "types": "./src/weather.ts",
+      "default": "./src/weather.ts"
     }
   },
   "files": ["src"],

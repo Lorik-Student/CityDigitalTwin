@@ -1,5 +1,5 @@
 import type { Map as MapboxMap } from 'mapbox-gl';
-import type { CityProfile } from '@shared/api-types/city';
+import type { CityProfile } from '@shared/api-types';
 import { API_BASE_URL } from '../auth/authClient';
 
 export async function initializeRegions(
@@ -30,6 +30,8 @@ export async function initializeRegions(
                 properties: { 
                     id: city.id, 
                     name: city.name, 
+                    lat: city.lat,
+                    lng: city.lng,
                     weatherCondition: city.weatherCondition,
                     population: city.population,
                     area: city.area,

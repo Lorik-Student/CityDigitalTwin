@@ -1,20 +1,12 @@
-import type { AuthSession, LoginInfo, LoginResult, SignupInfo } from "@shared/api-types/auth";
+import type { LoginInfo, AuthState, SignupInfo } from "@shared/api-types/auth";
 import type { ErrorPayload } from "@shared/api-types/errors";
-import type { UserProfile } from "@shared/api-types/users";
+
+export type { AuthState };
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";
 const SESSION_STORAGE_KEY = "city-digital-twin.auth";
 
-export type AuthState = AuthSession & {
-    user: UserProfile;
-};
-
-type SignupResponse = {
-    success: boolean;
-    message: string;
-    user: UserProfile;
-};
-
+    
 async function parseResponse<T>(response: Response): Promise<T> {
     const payload = await response.json().catch(() => null);
 
@@ -47,22 +39,23 @@ export function clearSession() {
 }
 
 export async function login(credentials: LoginInfo): Promise<AuthState> {
-    const session = await fetch(`${API_BASE_URL}/auth/login`, {
+    return fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
-    }).then(response => parseResponse<LoginResult>(response));
-
-    return session;
+    }).then(response => parseResponse<AuthState>(response));
 }
 
-export async function signup(userData: SignupInfo): Promise<SignupResponse> {
-    return fetch(`${API_BASE_URL}/auth/signup`, {
+export async function signup(userData: SignupInfo): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
-    }).then(response => parseResponse<SignupResponse>(response));
+    });
+
+    await parseResponse<{ message: string }>(response);
 }
+
 
 export async function logout(refreshToken: string): Promise<void> {
     await fetch(`${API_BASE_URL}/auth/logout`, {

@@ -4,7 +4,9 @@ import mapboxgl, { type LngLatBoundsLike } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { initializeRegions } from './mapUtils';
 import type { CityProfile } from '@shared/api-types';
+import type { WeatherCurrent } from '@shared/api-types/weather';
 import { InfoCard } from '../components/InfoCard'
+import { API_BASE_URL } from '../auth/authClient';
 
 type MapProps = {
     accessToken?: string;
@@ -17,6 +19,9 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [hasLoadedRegions, setHasLoadedRegions] = useState(false);
     const [selectedCity, setSelectedCity] = useState<CityProfile | null>(null);
+    const [selectedWeather, setSelectedWeather] = useState<WeatherCurrent | null>(null);
+    const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+    const [weatherError, setWeatherError] = useState<string | null>(null);
     const [isThreeD, setIsThreeD] = useState(false);
 
     useEffect(() => {
@@ -68,6 +73,53 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
             .catch(() => onAuthRequired());
     }, [accessToken, hasLoadedRegions, isMapLoaded, onAuthRequired]);
 
+    useEffect(() => {
+        if (!selectedCity || !accessToken) {
+            setSelectedWeather(null);
+            setWeatherError(null);
+            setIsWeatherLoading(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        const lat = Number(selectedCity.lat);
+        const lng = Number(selectedCity.lng);
+
+        setIsWeatherLoading(true);
+        setWeatherError(null);
+
+        fetch(`${API_BASE_URL}/weather/current?lat=${lat}&lng=${lng}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            signal: controller.signal,
+        })
+            .then(async (response) => {
+                const payload = await response.json().catch(() => null);
+
+                if (!response.ok) {
+                    throw new Error(payload?.message ?? 'Unable to load weather data.');
+                }
+
+                return payload as WeatherCurrent;
+            })
+            .then(setSelectedWeather)
+            .catch((error: Error) => {
+                if (error.name === 'AbortError') return;
+                setSelectedWeather(null);
+                setWeatherError(error.message);
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsWeatherLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [accessToken, selectedCity]);
+
     const zoomIn = () => {
         map.current?.zoomIn({ duration: 250 });
     };
@@ -100,8 +152,11 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
         />
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_35%,_#02090c_85%,_#010507_100%)] mix-blend-multiply opacity-95' />
         <InfoCard 
-            title={selectedCity?.name!}
-            description={selectedCity?.description!}
+            title={selectedCity?.name}
+            description={selectedCity?.description}
+            weather={selectedWeather}
+            isWeatherLoading={isWeatherLoading}
+            weatherError={weatherError}
         />
         <div className='absolute right-6 top-1/2 z-50 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-cyan-500/25 bg-[#071116]/80 shadow-[0_0_24px_rgba(6,182,212,0.18)] backdrop-blur-xl'>
             <button
