@@ -3,6 +3,7 @@ export * from "./data-points.js";
 export * from "./users.js";
 export * from "./auth.js";
 export * from "./weather.js";
+export * from "./traffic.js";
 
 export type Id = string & { readonly __brand: "Id" };
 

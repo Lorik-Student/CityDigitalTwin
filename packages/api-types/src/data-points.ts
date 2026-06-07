@@ -12,6 +12,7 @@ export const cityProfileSchema = z.object({
     weatherCondition: z.string().trim().max(255).optional(),
     population: z.number().int().nonnegative().optional(),
     area: z.number().positive().optional(),
+    imageUrl: z.string().trim().url().optional().nullable(),
     description: z.string().min(30).max(1024)
     
 })

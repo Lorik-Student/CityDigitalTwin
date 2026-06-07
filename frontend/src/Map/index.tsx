@@ -6,22 +6,34 @@ import { initializeRegions } from './mapUtils';
 import type { CityProfile } from '@shared/api-types';
 import type { WeatherCurrent } from '@shared/api-types/weather';
 import { InfoCard } from '../components/InfoCard'
-import { API_BASE_URL } from '../auth/authClient';
+import { apiFetch, getStoredSession } from '../auth/authClient';
+import { connectTrafficStream, fetchTrafficSensors, removeTrafficSensors, renderTrafficSensors } from './traffic';
 
 type MapProps = {
     accessToken?: string;
     onAuthRequired: () => void;
 };
 
+type TrafficStatus = 'idle' | 'loading' | 'live' | 'empty' | 'error';
+
+function isPrizren(city: CityProfile | null): city is CityProfile {
+    return city?.name?.trim().toLowerCase() === 'prizren';
+}
+
 export default function Map({ accessToken, onAuthRequired }: MapProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null); 
+    const isThreeDRef = useRef(false);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [hasLoadedRegions, setHasLoadedRegions] = useState(false);
     const [selectedCity, setSelectedCity] = useState<CityProfile | null>(null);
     const [selectedWeather, setSelectedWeather] = useState<WeatherCurrent | null>(null);
     const [isWeatherLoading, setIsWeatherLoading] = useState(false);
     const [weatherError, setWeatherError] = useState<string | null>(null);
+    const [trafficStatus, setTrafficStatus] = useState<TrafficStatus>('idle');
+    const [trafficSensorCount, setTrafficSensorCount] = useState(0);
+    const [trafficUpdatedAt, setTrafficUpdatedAt] = useState<string | null>(null);
+    const [trafficError, setTrafficError] = useState<string | null>(null);
     const [isThreeD, setIsThreeD] = useState(false);
 
     useEffect(() => {
@@ -68,7 +80,7 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
             return;
         }
 
-        initializeRegions(map.current, setSelectedCity, accessToken)
+        initializeRegions(map.current, setSelectedCity, () => isThreeDRef.current)
             .then(() => setHasLoadedRegions(true))
             .catch(() => onAuthRequired());
     }, [accessToken, hasLoadedRegions, isMapLoaded, onAuthRequired]);
@@ -88,23 +100,10 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
         setIsWeatherLoading(true);
         setWeatherError(null);
 
-        fetch(`${API_BASE_URL}/weather/current?lat=${lat}&lng=${lng}`, {
+        apiFetch<WeatherCurrent>(`/weather/current?lat=${lat}&lng=${lng}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-            },
             signal: controller.signal,
         })
-            .then(async (response) => {
-                const payload = await response.json().catch(() => null);
-
-                if (!response.ok) {
-                    throw new Error(payload?.message ?? 'Unable to load weather data.');
-                }
-
-                return payload as WeatherCurrent;
-            })
             .then(setSelectedWeather)
             .catch((error: Error) => {
                 if (error.name === 'AbortError') return;
@@ -120,6 +119,81 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
         return () => controller.abort();
     }, [accessToken, selectedCity]);
 
+    useEffect(() => {
+        if (!isMapLoaded || !map.current || !accessToken || !isPrizren(selectedCity)) {
+            if (map.current) {
+                removeTrafficSensors(map.current);
+            }
+            setTrafficStatus('idle');
+            setTrafficSensorCount(0);
+            setTrafficUpdatedAt(null);
+            setTrafficError(null);
+            return;
+        }
+
+        const trafficCity = selectedCity;
+        let isActive = true;
+        let trafficStream: EventSource | null = null;
+
+        setTrafficStatus('loading');
+        setTrafficSensorCount(0);
+        setTrafficUpdatedAt(null);
+        setTrafficError(null);
+
+        fetchTrafficSensors(trafficCity.id)
+            .then((sensors) => {
+                if (!isActive || !map.current) return;
+
+                setTrafficSensorCount(sensors.length);
+
+                if (sensors.length === 0) {
+                    removeTrafficSensors(map.current);
+                    setTrafficStatus('empty');
+                    return;
+                }
+
+                renderTrafficSensors(map.current, sensors);
+                const streamAccessToken = getStoredSession()?.accessToken ?? accessToken;
+                trafficStream = connectTrafficStream(
+                    trafficCity.id,
+                    streamAccessToken,
+                    (readings) => {
+                        if (isActive && map.current) {
+                            renderTrafficSensors(map.current, sensors, readings);
+                            setTrafficStatus('live');
+                            setTrafficUpdatedAt(new Date().toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                            }));
+                        }
+                    },
+                    () => {
+                        trafficStream?.close();
+                        if (isActive) {
+                            setTrafficStatus('error');
+                            setTrafficError('Live traffic stream disconnected.');
+                        }
+                    }
+                );
+            })
+            .catch((error: Error) => {
+                console.error(error.message);
+                if (isActive) {
+                    setTrafficStatus('error');
+                    setTrafficError(error.message);
+                }
+            });
+
+        return () => {
+            isActive = false;
+            trafficStream?.close();
+            if (map.current) {
+                removeTrafficSensors(map.current);
+            }
+        };
+    }, [accessToken, isMapLoaded, selectedCity]);
+
     const zoomIn = () => {
         map.current?.zoomIn({ duration: 250 });
     };
@@ -131,6 +205,7 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
     const togglePerspective = () => {
         const nextIsThreeD = !isThreeD;
         setIsThreeD(nextIsThreeD);
+        isThreeDRef.current = nextIsThreeD;
 
         map.current?.easeTo({
             pitch: nextIsThreeD ? 62 : 0,
@@ -152,12 +227,57 @@ export default function Map({ accessToken, onAuthRequired }: MapProps) {
         />
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_35%,_#02090c_85%,_#010507_100%)] mix-blend-multiply opacity-95' />
         <InfoCard 
+            pictureUrl={selectedCity?.imageUrl ?? undefined}
             title={selectedCity?.name}
             description={selectedCity?.description}
             weather={selectedWeather}
             isWeatherLoading={isWeatherLoading}
             weatherError={weatherError}
         />
+        {isPrizren(selectedCity) && (
+            <div className='absolute bottom-6 right-6 z-50 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-cyan-500/25 bg-[#071116]/88 p-4 text-sm text-cyan-50 shadow-[0_0_24px_rgba(6,182,212,0.18)] backdrop-blur-xl'>
+                <div className='mb-3 flex items-center justify-between gap-4'>
+                    <div>
+                        <div className='text-xs font-semibold uppercase tracking-wide text-cyan-200'>Traffic Sensors</div>
+                        <div className='text-lg font-bold text-white'>
+                            {trafficStatus === 'loading' && 'Loading live data'}
+                            {trafficStatus === 'live' && `${trafficSensorCount} sensors live`}
+                            {trafficStatus === 'empty' && 'No sensors found'}
+                            {trafficStatus === 'error' && 'Traffic unavailable'}
+                            {trafficStatus === 'idle' && 'Waiting for Prizren'}
+                        </div>
+                    </div>
+                    {trafficUpdatedAt && (
+                        <div className='shrink-0 text-right text-xs text-cyan-100/80'>
+                            Updated<br />
+                            <span className='font-semibold text-cyan-50'>{trafficUpdatedAt}</span>
+                        </div>
+                    )}
+                </div>
+                {trafficStatus === 'empty' && (
+                    <p className='mb-3 text-xs leading-relaxed text-amber-100'>
+                        The traffic layer is integrated, but the database returned 0 sensors for Prizren. Run migration V6 to seed them.
+                    </p>
+                )}
+                {trafficError && (
+                    <p className='mb-3 text-xs leading-relaxed text-rose-100'>{trafficError}</p>
+                )}
+                <div className='grid grid-cols-3 gap-2 text-xs'>
+                    <div className='flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1.5'>
+                        <span className='h-2.5 w-2.5 rounded-full bg-[#22c55e]' />
+                        <span>Low</span>
+                    </div>
+                    <div className='flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1.5'>
+                        <span className='h-2.5 w-2.5 rounded-full bg-[#facc15]' />
+                        <span>Medium</span>
+                    </div>
+                    <div className='flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1.5'>
+                        <span className='h-2.5 w-2.5 rounded-full bg-[#ef4444]' />
+                        <span>High</span>
+                    </div>
+                </div>
+            </div>
+        )}
         <div className='absolute right-6 top-1/2 z-50 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-cyan-500/25 bg-[#071116]/80 shadow-[0_0_24px_rgba(6,182,212,0.18)] backdrop-blur-xl'>
             <button
                 type='button'

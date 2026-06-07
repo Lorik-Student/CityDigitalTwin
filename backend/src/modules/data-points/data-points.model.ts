@@ -5,7 +5,7 @@ import type { Id } from "@shared/api-types"
 
 export async function getAllCityProfiles(): Promise<CityProfile[]> { 
     const query = `SELECT   uuid as id, name, lat, lng,
-                            weather_condition, population, area, description
+                            weather_condition, population, area, image_url, description
                             FROM Cities
                         `
     const { rows } = await pg.query<CityProfile>(query);
@@ -14,7 +14,7 @@ export async function getAllCityProfiles(): Promise<CityProfile[]> {
 
 export async function getCityProfile(id: Id): Promise<CityProfile> { 
     const query = `SELECT   uuid as id, name, lat, lng,
-                            weather_condition, population, area, description
+                            weather_condition, population, area, image_url, description
                             FROM Cities
                             WHERE uuid = $1
                         `

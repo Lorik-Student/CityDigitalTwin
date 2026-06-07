@@ -55,6 +55,14 @@
     "./weather.js": {
       "types": "./src/weather.ts",
       "default": "./src/weather.ts"
+    },
+    "./traffic": {
+      "types": "./src/traffic.ts",
+      "default": "./src/traffic.ts"
+    },
+    "./traffic.js": {
+      "types": "./src/traffic.ts",
+      "default": "./src/traffic.ts"
     }
   },
   "files": ["src"],

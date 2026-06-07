@@ -15,11 +15,13 @@ export type AuthenticatedRequest = Request & {
 
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const queryToken = typeof req.query.accessToken === 'string' ? req.query.accessToken : null;
+
+    if ((!authHeader || !authHeader.startsWith('Bearer ')) && !queryToken) {
         throw new UnauthorizedError({ code: "MISSING_AUTH_HEADER", message: "Mungon header-i i autorizimit" });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = queryToken ?? authHeader!.split(' ')[1];
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;

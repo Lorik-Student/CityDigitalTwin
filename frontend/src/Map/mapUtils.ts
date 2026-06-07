@@ -1,26 +1,14 @@
 import type { Map as MapboxMap } from 'mapbox-gl';
 import type { CityProfile } from '@shared/api-types';
-import { API_BASE_URL } from '../auth/authClient';
+import { apiFetch } from '../auth/authClient';
 
 export async function initializeRegions(
     mapInstance: MapboxMap,
     onCitySelect: (cityProps: CityProfile) => void,
-    accessToken: string
+    getIsThreeD: () => boolean
 ) { 
     try {
-        const response = await fetch(`${API_BASE_URL}/data-points/cities`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
-            },
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const cities: CityProfile[] = await response.json();
+        const cities = await apiFetch<CityProfile[]>("/data-points/cities");
 
         const features = cities
             .filter(city => city && city.lng !== undefined && city.lat !== undefined)
@@ -35,6 +23,7 @@ export async function initializeRegions(
                     weatherCondition: city.weatherCondition,
                     population: city.population,
                     area: city.area,
+                    imageUrl: city.imageUrl,
                     description: city.description
                 },
                 geometry: { 
@@ -95,6 +84,20 @@ export async function initializeRegions(
         
         const clickedCity = e.features[0];
         if (clickedCity.properties) {
+            if (clickedCity.properties.name === 'Prizren') {
+                const isThreeD = getIsThreeD();
+
+                mapInstance.flyTo({
+                    center: [20.7397, 42.2139],
+                    zoom: 15.7,
+                    pitch: isThreeD ? 62 : 0,
+                    bearing: isThreeD ? -18 : 0,
+                    speed: 0.9,
+                    curve: 1.4,
+                    essential: true
+                });
+            }
+
             // Pass the GeoJSON properties back to React state
             onCitySelect(clickedCity.properties as CityProfile);
         }
