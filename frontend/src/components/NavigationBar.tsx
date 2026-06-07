@@ -10,6 +10,7 @@ type NavigationBarProps = {
 
 export function NavigationBar({ user, onLogin, onLogout }: NavigationBarProps) {
   const [time, setTime] = useState('');
+  const [activeHash, setActiveHash] = useState(() => window.location.hash || '#home');
 
   useEffect(() => {
     const updateTime = () => {
@@ -21,22 +22,41 @@ export function NavigationBar({ user, onLogin, onLogout }: NavigationBarProps) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const updateActiveHash = () => setActiveHash(window.location.hash || '#home');
+
+    window.addEventListener('hashchange', updateActiveHash);
+    return () => window.removeEventListener('hashchange', updateActiveHash);
+  }, []);
+
+  const getNavClass = (hash: string) => {
+    const isActive = activeHash === hash || (hash === '#home' && activeHash === '');
+    return isActive
+      ? 'relative flex items-center gap-2 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-semibold text-lg transition-transform active:scale-95 cursor-pointer'
+      : 'relative flex items-center gap-2 text-[#d1d5db] hover:text-white transition-colors font-medium text-lg active:scale-95 cursor-pointer';
+  };
+
+  const isHome = activeHash === '#home' || activeHash === '';
+
   return (
     <div className='fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center select-none'>
-        {/* Top Main Pill */}
         <nav className='relative bg-[#1e2e36]/30 backdrop-blur-2xl border-[1px] border-white/10 rounded-full px-10 py-3.5 flex items-center gap-12' style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1)' }}>
-            {/* Glow effect under Home */}
             <div className='absolute top-0 left-[2.5rem] w-24 h-full bg-[#00e5ff]/10 rounded-full blur-md pointer-events-none'></div>
 
-            <a href='#home' className='relative flex items-center gap-2 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-semibold text-lg transition-transform active:scale-95 cursor-pointer'>
+            <a href='#home' className={getNavClass('#home')}>
                 <Home size={22} className='stroke-[2.5px]' />
                 <span>Home</span>
-                <div className='absolute -bottom-[15px] left-1/2 -translate-x-1/2 w-16 h-[3px] bg-[#00e5ff] shadow-[0_-2px_10px_rgba(0,229,255,1)]'></div>
+                {activeHash === '#home' && (
+                    <div className='absolute -bottom-[15px] left-1/2 -translate-x-1/2 w-16 h-[3px] bg-[#00e5ff] shadow-[0_-2px_10px_rgba(0,229,255,1)]'></div>
+                )}
             </a>
 
-            <a href='#about' className='flex items-center gap-2 text-[#d1d5db] hover:text-white transition-colors font-medium text-lg active:scale-95 cursor-pointer'>
+            <a href='#about' className={getNavClass('#about')}>
                 <Info size={22} />
                 <span>About</span>
+                {activeHash === '#about' && (
+                    <div className='absolute -bottom-[15px] left-1/2 -translate-x-1/2 w-16 h-[3px] bg-[#00e5ff] shadow-[0_-2px_10px_rgba(0,229,255,1)]'></div>
+                )}
             </a>
 
             <a href='#contact' className='flex items-center gap-2 text-[#d1d5db] hover:text-white transition-colors font-medium text-lg active:scale-95 cursor-pointer'>
@@ -54,8 +74,8 @@ export function NavigationBar({ user, onLogin, onLogout }: NavigationBarProps) {
             </button>
         </nav>
 
-        {/* Bottom Sub Pill */}
-        <div className='mt-[-1px] z-[-1] bg-[#142026]/40 backdrop-blur-xl border-x-[1px] border-b-[1px] border-white/5 rounded-b-2xl px-12 py-2 flex items-center gap-8 text-[13px] text-[#9ca3af] font-medium tracking-wider' style={{ boxShadow: '0 10px 24px rgba(0,0,0,0.4)' }}>
+        {isHome && (
+        <div className='mt-[-1px] z-[-1] w-[92%] bg-[#142026]/40 backdrop-blur-xl border-x-[1px] border-b-[1px] border-white/5 rounded-b-2xl px-8 py-2 flex items-center justify-center gap-7 text-[13px] text-[#9ca3af] font-medium tracking-wider' style={{ boxShadow: '0 10px 24px rgba(0,0,0,0.4)' }}>
             <div className='flex items-center gap-2 hover:text-white cursor-pointer transition-colors'>
                 <Aperture size={15} className='text-[#00e5ff]' />
                 <span>CityDigitalTwin</span>
@@ -85,6 +105,7 @@ export function NavigationBar({ user, onLogin, onLogout }: NavigationBarProps) {
                 </>
             )}
         </div>
+        )}
     </div>
   );
 }
